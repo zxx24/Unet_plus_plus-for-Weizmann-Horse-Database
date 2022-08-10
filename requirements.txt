@@ -1,0 +1,7 @@
+torch
+opencv-python
+numpy
+argparse
+matplotlib
+torchvision
+PIL
