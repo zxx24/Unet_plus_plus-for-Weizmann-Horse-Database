@@ -14,13 +14,17 @@ This repository uses the Weizmann Horse Database for training and semantic segme
 
 My code has been tested on Python 3.9 and PyTorch 1.11.0. Please follow the official instructions to configure your environment. See other required packages in `requirements.txt`.
 
-## Model ##
+## Down pretrained Models ##
 
 In the project: 
 
-**best_model.pth** holds the network structure parameters of the best model from my training process. 
+### ***Please click on the hyperlinks below to get the models**.*
 
-**Unet_plus_plus.pth** holds the full structure of the best model from my training process. 
+**Password：kour**
+
+**[best_model.pth](https://pan.baidu.com/s/11zPWaLTH0wvxANX_3ITuQA)** holds the network structure parameters of the best model from my training process. 
+
+**[Unet_plus_plus.pth](https://pan.baidu.com/s/11zPWaLTH0wvxANX_3ITuQA)** holds the full structure of the best model from my training process. 
 
 ## Prepare Your Data
 
