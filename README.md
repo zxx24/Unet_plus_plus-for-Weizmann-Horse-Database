@@ -14,7 +14,7 @@ This repository uses the Weizmann Horse Database for training and semantic segme
 
 My code has been tested on Python 3.9 and PyTorch 1.11.0. Please follow the official instructions to configure your environment. See other required packages in `requirements.txt`.
 
-## Down pretrained Models ##
+## Download the pretrained Models ##
 
 In the project: 
 
