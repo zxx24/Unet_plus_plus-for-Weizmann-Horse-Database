@@ -22,6 +22,8 @@ In the project:
 
 **Password：kour**
 
+**Please place the model files in the same directory as the .py file.**
+
 **[best_model.pth](https://pan.baidu.com/s/11zPWaLTH0wvxANX_3ITuQA)** holds the network structure parameters of the best model from my training process. 
 
 **[Unet_plus_plus.pth](https://pan.baidu.com/s/11zPWaLTH0wvxANX_3ITuQA)** holds the full structure of the best model from my training process. 
