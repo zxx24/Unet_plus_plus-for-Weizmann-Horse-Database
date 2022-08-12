@@ -20,9 +20,9 @@ In the project:
 
 ### ***Please click on the hyperlinks below to get the models**.*
 
-**Password：kour**
+**_Password_：kour**
 
-**Please place the model files in the same directory as the .py file.**
+**Please place the model files in the same level as the .py file.**
 
 **[best_model.pth](https://pan.baidu.com/s/11zPWaLTH0wvxANX_3ITuQA)** holds the network structure parameters of the best model from my training process. 
 
@@ -32,7 +32,7 @@ In the project:
 
 1. Please obtain the dataset from [Weizmann Horse Database | Kaggle](https://www.kaggle.com/datasets/ztaihong/weizmann-horse-database/metadata).
 2. The dataset contains 327 images of horses and masked images.
-3. In the train you need to change "root" to an absolute path to the weizmann_horse_db.
+3. In the train you need to change **"root"** to an **absolute path** to the weizmann_horse_db.
 4. I used the **first 85%** of the images in the dataset for training and the **second 15%** for testing.
 5. The final path structure used in my code looks like this:
 
@@ -61,6 +61,7 @@ Run the following command to train Unet++ :
     python train.py
 
 - 'root'(in train.py) should be modified to your dataset directory.
+- The parameter "new_model" in train.py determines whether to train the new model or to continue training on the pre-trained model using the .pth file. **1--new model,0 -- pretrained model**
 - Please see the contents of train.py for specific parameter settings. There are detailed descriptions inside. The important parameters are epochs, deep_supervision, cut, learning rate. They determine the results of training and testing.
 - I have trained a model which you can use directly by setting the parameters in train.py.
 - I was able to train the model on CPU(Intel(R) Core(TM) i7-10710U CPU @ 1.10GHz   1.61 GHz). The training took approximately 10 hours in 200 Epoch conditions.
