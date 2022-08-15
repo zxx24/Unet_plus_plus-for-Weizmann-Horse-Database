@@ -133,8 +133,6 @@ class Train_Transform(object):
         #     , methodcaller('centercrop', img, mask), methodcaller('affine', img, mask)
         #     , methodcaller('resize', img, mask), methodcaller('colof_jitter', img, mask)
         #     , methodcaller('noise', img, mask), methodcaller('blur', img, mask)]
-        #
-        # img, mask = random.choice(transform_list)(self.Augment)
 
         transform_list = [methodcaller('random_resize_crop', img, mask), methodcaller('resize', img, mask)
             , methodcaller('blur', img, mask), methodcaller('rotate', img, mask)

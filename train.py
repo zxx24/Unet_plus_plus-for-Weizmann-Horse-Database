@@ -4,6 +4,7 @@ import torch.backends.cudnn as cudnn
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import os
 import random
 from net import Unet_plus_plus
@@ -32,25 +33,25 @@ import time
 parser = argparse.ArgumentParser()
 # ---------------------------------------------------------------------------
 # 指向数据集储存位置
-parser.add_argument('--root', default='D:/Dataset/horse/archive/weizmann_horse_db', help='folder to Dataset')
+parser.add_argument('--root', default='./horse/archive/weizmann_horse_db', help='folder to Dataset')
 # epoch次数
-parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train for')
+parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train for')
 # 是否新建模型    1-新建    0-使用历史最佳pth
-parser.add_argument('--new_model', type=int, help='new model whether or not', default=0)
+parser.add_argument('--new_model', type=int, help='new model whether or not', default=1)
 # 是否进行深监督
 parser.add_argument('--deep_supervision', default=True)
 # 是否进行减枝    剪枝操作只会对预测过程有用 设为True大幅度提升预测效率
 parser.add_argument('--cut', default=False)
 # 学习率
-parser.add_argument('--lr', type=float, default=1e-4, help='the learning rate')
+parser.add_argument('--lr', type=float, default=1e-3, help='the learning rate')
 # 最小学习率
-parser.add_argument('--min_lr', type=float, default=1e-6, help='minimum learning rate')
+parser.add_argument('--min_lr', type=float, default=1e-5, help='minimum learning rate')
 # 保存模型条件    达到此要求会保存一个模型参数 best_biou.pth
 parser.add_argument('--early_stop_b_iou', type=float, default=0.69, help='the minimal boundary iou')
 # 保存模型条件    达到此要求会保存一个模型参数 best_iou.pth
-parser.add_argument('--early_stop_iou', type=float, default=0.90, help='the minimal iou')
+parser.add_argument('--early_stop_iou', type=float, default=0.92, help='the minimal iou')
 # 退出训练条件之一 达到此要求代表有机会可以停止训练
-parser.add_argument('--signal_iou', type=float, default=0.90, help='the signal iou')
+parser.add_argument('--signal_iou', type=float, default=0.95, help='the signal iou')
 # ---------------------------------------------------------------------------
 # 是否打乱数据集
 parser.add_argument('--shuffle', type=bool, default=False, help='shuffle or not')
@@ -90,6 +91,9 @@ parser.add_argument('--predict', default='./predict', help='folder to predict')
 parser.add_argument('--manualSeed', type=int, default=11, help='manual seed')
 
 opt = parser.parse_args()
+
+# 判断GPU是否存在
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 argsDict = opt.__dict__
 # 写入参数设置至setting.txt
@@ -198,13 +202,15 @@ def train(model, data_loader, optimizer):
     num = 0
     # 一整个Epoch训练过程
     for image_batch, mask_batch in data_loader:
+        image_batch = image_batch.cuda()
+        mask_batch = mask_batch.cuda()
         num += 1
         loss = 0
         # 判断是否采用深监督  批次输入and输出
         if deep_supervision:
             outputs = model(image_batch)
             for output in outputs:
-                loss += bce_dice_loss(output, mask_batch)
+                loss += bce_dice_loss(output, mask_batch).cuda()
             loss /= len(outputs)
             iou = calculate_iou(outputs[-1].squeeze(dim=1), mask_batch)
             b_iou = boundary_iou(mask_batch, outputs[-1].squeeze(dim=1))
@@ -244,7 +250,8 @@ def test(model, test_data_loader):
 
     with torch.no_grad():
         for test_data, test_mask in test_data_loader:
-
+            test_data = test_data.cuda()
+            test_mask = test_mask.cuda()
             loss = 0
             if deep_supervision:
                 outputs = model(test_data)
@@ -274,6 +281,16 @@ def test(model, test_data_loader):
 
 # 保存训练过程中得到数据图像
 def save_fig(TRAIN_IOU, TRAIN_LOSS, TEST_IOU, TEST_LOSS, LR, EPOCH, TRAIN_B_IOU, TEST_B_IOU):
+    TRAIN_IOU = torch.tensor(TRAIN_IOU, device='cpu')
+    TRAIN_LOSS = torch.tensor(TRAIN_LOSS, device='cpu')
+    TEST_IOU = torch.tensor(TEST_IOU, device='cpu')
+    TEST_LOSS = torch.tensor(TEST_LOSS, device='cpu')
+    LR = torch.tensor(LR, device='cpu')
+    EPOCH = torch.tensor(EPOCH, device='cpu')
+    TRAIN_B_IOU = torch.tensor(TRAIN_B_IOU, device='cpu')
+    TEST_B_IOU = torch.tensor(TEST_B_IOU, device='cpu')
+    #matplotlib.use('Agg')
+    
     plt.figure(figsize=(8, 8))
     plt.title('Mean Iou')
     plt.xlabel('EPOCH')
@@ -288,18 +305,18 @@ def save_fig(TRAIN_IOU, TRAIN_LOSS, TEST_IOU, TEST_LOSS, LR, EPOCH, TRAIN_B_IOU,
     plt.clf()
 
     plt.figure(figsize=(8, 8))
-    plt.title('Mean Boundary Iou')
+    plt.title(' Boundary Iou')
     plt.xlabel('EPOCH')
-    plt.ylabel('Mean Boundary Iou')
+    plt.ylabel(' Boundary Iou')
     plt.plot(EPOCH, TRAIN_B_IOU, label='Train')
     plt.plot(EPOCH, TEST_B_IOU, label='Test')
     plt.legend(loc='upper left')
     if plot_all == 1:
         plt.show()
     else:
-        plt.savefig(r"./%s/mean_TEST_boundary_iou.png" % (opt.outf))
+        plt.savefig(r"./%s/Boundary_iou.png" % (opt.outf))
     plt.clf()
-
+    
     plt.figure(figsize=(8, 8))
     plt.title('Mean Loss')
     plt.xlabel('EPOCH')
@@ -338,6 +355,7 @@ def show_predict(test_data_loader, sign):
     state_dict = torch.load('best_model.pth')
     best_model.load_state_dict(state_dict, strict=False)
 
+    best_model = best_model.to(device=device)
     # 直接载入完整模型
     # best_model = torch.load('Unet_plus_plus.pth')  #可完整载入模型
     # best_model.eval()
@@ -352,6 +370,8 @@ def show_predict(test_data_loader, sign):
     toPIL = transforms.ToPILImage()  # 这个函数可以将张量转为PIL图片，由小数转为0-255之间的像素值
     with torch.no_grad():
         for test_data, test_mask in test_data_loader:
+            test_data = test_data.cuda()
+            test_mask = test_mask.cuda()
             cal += 1
             B, H, W = test_mask.shape
             for k in range(B):
@@ -399,28 +419,38 @@ def show_predict(test_data_loader, sign):
 
 
 def cal_time(data_loader):
+    cal_num = 10
     cut_model = Unet_plus_plus(deep_supervision=deep_supervision, cut=True)  # 默认在CPU上
     cut_state_dict = torch.load('best_model.pth')
     cut_model.load_state_dict(cut_state_dict, strict=False)
+    cut_model.to
+    cut_model = cut_model.to(device=device)
     cut_model.eval()
-
-    time_start = time.time()  # 记录开始时间
-    test(cut_model, data_loader)
-    time_end = time.time()  # 记录结束时间
-    time_gap = time_end - time_start  # 计算的时间差为程序的执行时间，单位为秒/s
-    print("剪枝时间间隔为", time_gap)
-
+    
     not_cut_model = Unet_plus_plus(deep_supervision=deep_supervision, cut=False)  # 默认在CPU上
     not_cut_state_dict = torch.load('best_model.pth')
     not_cut_model.load_state_dict(not_cut_state_dict, strict=False)
+    not_cut_model = not_cut_model.to(device=device)
     not_cut_model.eval()
+    
+    CUT_TIME = 0
+    NOT_CUT_TIME = 0
+    for i in range(cal_num):
+        time_start1 = time.time()  # 记录开始时间
+        test(cut_model, data_loader)
+        time_end1 = time.time()  # 记录结束时间
+        time_gap1 = time_end1 - time_start1  # 计算的时间差为程序的执行时间，单位为秒/s
+        print("剪枝时间间隔为", time_gap1)
+        CUT_TIME += time_gap1
 
-    time_start = time.time()  # 记录开始时间
-    test(not_cut_model, data_loader)
-    time_end = time.time()  # 记录结束时间
-    time_gap = time_end - time_start  # 计算的时间差为程序的执行时间，单位为秒/s
-    print("不剪枝时间间隔为", time_gap)
-
+        time_start2 = time.time()  # 记录开始时间
+        test(not_cut_model, data_loader)
+        time_end2 = time.time()  # 记录结束时间
+        time_gap2 = time_end2 - time_start2  # 计算的时间差为程序的执行时间，单位为秒/s
+        print("不剪枝时间间隔为", time_gap2)
+        NOT_CUT_TIME +=time_gap2
+    print("测试轮数：",cal_num,"总剪枝时长:",CUT_TIME,"平均时长:",float(CUT_TIME/cal_num))
+    print("测试轮数：",cal_num,"总剪枝时长:",NOT_CUT_TIME,"平均时长:",float(NOT_CUT_TIME/cal_num))
 
 def main():
     # 载入模型 deep_supervision与否来构建模型  后剪枝只在预测过程中使用 对于创建模型不影响，默认为False
@@ -434,8 +464,13 @@ def main():
         model = Unet_plus_plus(input_channel=3, num_classes=1, deep_supervision=deep_supervision, cut=False)
         state_dict = torch.load('best_model.pth')  # 载入参数
         model.load_state_dict(state_dict, strict=False)
+        # model = torch.load('Unet_plus_plus.pth')  #可完整载入模型
+
     else:
         model = Unet_plus_plus(input_channel=3, num_classes=1, deep_supervision=deep_supervision, cut=False)
+
+    # 添加CPU或者GPU
+    model = model.to(device=device)
 
     # 定义需要更新的参数
     params_to_optimize = [p for p in model.parameters() if p.requires_grad]
@@ -506,7 +541,6 @@ def main():
 
         # 更新学习率
         my_lr_scheduler.step()
-        torch.cuda.empty_cache()
 
         # 输出记录到文件夹内
         if (epoch + 1) % 5 == 0:
@@ -526,7 +560,7 @@ if __name__ == '__main__':
     # 包含训练、测试、预测等过程
     main()
 
-    # 删除此注释并修改cut可以生成 剪枝或不剪枝 预测
+    # 删除此注释并修改cut可以生成 剪枝或不剪枝 预测，并在predict里面生成对应预测图片
     # show_predict(train_data_loader, 1)
     # show_predict(test_data_loader, 1)
 
