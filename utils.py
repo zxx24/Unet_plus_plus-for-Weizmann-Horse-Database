@@ -8,18 +8,21 @@ import torch.nn.functional as F
 # 由于数据进行了归一化
 # 以0.5作为分界线 大于0.5的为前景 小于0.5的为背景
 def calculate_iou(predict, mask):
-    predict = torch.sigmoid(predict).data.cpu().numpy()
-    mask = torch.sigmoid(mask).data.cpu().numpy()
+    predict = torch.sigmoid(predict).cpu().data.numpy()
+    mask = torch.sigmoid(mask).cpu().data.numpy()
     predict_ = predict > 0.5
+    _predict = predict <= 0.5
     mask_ = mask > 0.5
+    _mask = mask <= 0.5
     # 进行与或操作 获取交并集
     intersection = (predict_ & mask_).sum()
     union = (predict_ | mask_).sum()
-    if union < 1e-5:
+    _intersection = (_predict & _mask).sum()
+    _union = (_predict | _mask).sum()
+    if union < 1e-5 or _union < 1e-5:
         return 0
-    iou = intersection / union
-
-    return iou
+    miou = (intersection / union) * 0.5 + 0.5 * (_intersection / _union)
+    return miou
 
 
 # 通过腐蚀操作获取边界
@@ -31,7 +34,9 @@ def mask_to_boundary(mask, dilation_ratio=0.02, sign=1):
         mask[mask <= 0.5] = 0
         mask = mask.astype('uint8')
     elif sign == 0:
+        mask = mask.cpu()
         mask = np.array(mask).astype('uint8')
+        # mask = torch.tensor(mask).data.cpu.numpy().astype('uint8')
 
     b, h, w = mask.shape
     new_mask = np.zeros([b, h + 2, w + 2])
@@ -74,6 +79,7 @@ def boundary_iou(gt, dt, dilation_ratio=0.02):
     return boundary_iou
 
 
+# 损失函数
 def bce_dice_loss(predict_batch, mask_batch):
     smooth = 1e-5
     # bce loss
