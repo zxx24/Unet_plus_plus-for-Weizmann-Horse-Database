@@ -29,7 +29,7 @@ In the project:
 
 1. Please obtain the dataset from [Weizmann Horse Database | Kaggle](https://www.kaggle.com/datasets/ztaihong/weizmann-horse-database/metadata).
 2. The dataset contains 327 images of horses and masked images.
-3. In the train you need to change "root" to an absolute path to the weizmann_horse_db.
+3. In the train you need to **change "root" to an absolute path to the weizmann_horse_db**.And **run train.py** so that the parameters are written to the setting .txt.
 4. I used the **first 85%** of the images in the dataset for training and the **second 15%** for testing.
 5. The final path structure used in my code looks like this:
 
