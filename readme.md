@@ -34,7 +34,7 @@ In the project:
 5. The final path structure used in my code looks like this:
 
 ````
-$PATH_TO_DATASET/
+$root/
 ├──── horse(327 images)
 │    ├──── horse001.png
 │    ├──── horse002.png
