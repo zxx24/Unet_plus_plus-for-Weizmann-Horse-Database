@@ -1,5 +1,5 @@
 ------------------ start ------------------
-root : D:/Dataset/horse/archive/weizmann_horse_db
+root : ./horse/archive/weizmann_horse_db
 epochs : 100
 new_model : 0
 deep_supervision : True
