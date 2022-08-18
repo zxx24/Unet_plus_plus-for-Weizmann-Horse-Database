@@ -25,7 +25,7 @@ In the project:
 
 **[Unet_plus_plus.pth](https://pan.baidu.com/s/1imaO-CyHwAGlIOFV9vNH1A)** holds the full structure of the best model from my training process.
 
-Please place the model files in the same level directory as the py files.
+Please place the model files in the same level directory as the .py files.
 
 ## Prepare Your Data
 
@@ -67,6 +67,7 @@ Run the following command to train Unet++ :
 ## Testing ##
 
 You can run validate.py to quickly validate the current best model on the latter 15% of the dataset.
+You need to change the path of root in validate.py to the location where the dataset is saved. **Alternatively, first modify root in train.py and run it**. This will cause the parameters to be saved in setting.txt for reading in other .py files.
 
     python validate.py
 
