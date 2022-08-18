@@ -35,11 +35,11 @@ In the project:
 
 ````
 $root/
-├──── horse(327 images)
+├──── horse
 │    ├──── horse001.png
 │    ├──── horse002.png
 │    └──── ...
-├──── mask(327images)
+├──── mask
 │    ├──── horse001.png
 │    ├──── horse002.png
 │    └──...
