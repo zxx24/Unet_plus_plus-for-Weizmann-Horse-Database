@@ -23,7 +23,8 @@ In the project:
 
 **[best_model.pth](https://pan.baidu.com/s/1imaO-CyHwAGlIOFV9vNH1A)** holds the network structure parameters of the best model from my training process. 
 
-**[Unet_plus_plus.pth](https://pan.baidu.com/s/1imaO-CyHwAGlIOFV9vNH1A)** holds the full structure of the best model from my training process. 
+**[Unet_plus_plus.pth](https://pan.baidu.com/s/1imaO-CyHwAGlIOFV9vNH1A)** holds the full structure of the best model from my training process.
+Please place the model files in the same level directory as the py files.
 
 ## Prepare Your Data
 
