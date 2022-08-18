@@ -67,6 +67,7 @@ Run the following command to train Unet++ :
 ## Testing ##
 
 You can run validate.py to quickly validate the current best model on the latter 15% of the dataset.
+
 You need to change the path of root in validate.py to the location where the dataset is saved. **Alternatively, first modify root in train.py and run it**. This will cause the parameters to be saved in setting.txt for reading in other .py files.
 
     python validate.py
