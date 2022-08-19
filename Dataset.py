@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # 此文件用于载入数据
 
 # 数据载入
-root = 'D:/Dataset/horse/archive/weizmann_horse_db'  # 默认设置
+root = './horse/archive/weizmann_horse_db'  # 默认设置
 with open('setting.txt', 'r') as f:
     lines = f.readlines()
     f.close()

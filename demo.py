@@ -5,8 +5,11 @@ from net import Unet_plus_plus
 from Dataset import HorseDataset
 from torchvision import transforms
 from my_augment import Transform_Compose, Train_Transform, Totensor, Test_Transform
-from utils import  mask_to_boundary
+from utils import mask_to_boundary
 from PIL import Image
+
+# 判断GPU是否存在
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # 划分训练集and 测试集
 idx = np.arange(327)
@@ -16,15 +19,15 @@ testing_idx = idx[278:327]
 train_transforms = Transform_Compose([Train_Transform(image_size=80), Totensor()])
 test_transforms = Transform_Compose([Test_Transform(image_size=80), Totensor()])
 
-root = 'D:/Dataset/horse/archive/weizmann_horse_db' #默认设置
+root = './horse/archive/weizmann_horse_db'  # 默认设置
 with open('setting.txt', 'r') as f:
     lines = f.readlines()
     f.close()
 
 for line in lines:
     if "root" in line:
-        line = line.rstrip("\n")    #去掉末尾\n
-        line_split= line.split(' ')
+        line = line.rstrip("\n")  # 去掉末尾\n
+        line_split = line.split(' ')
         root = line_split[2]
 
 # 载入数据
@@ -46,13 +49,12 @@ if __name__ == '__main__':
     print("-" * 34)
     print("demo--strating")
     best_model = Unet_plus_plus(deep_supervision=True, cut=True)  # 默认在CPU上
-    state_dict = torch.load('best_model.pth')
+    state_dict = torch.load('best_model.pth', map_location=device)
     best_model.load_state_dict(state_dict, strict=False)
 
     toPIL = transforms.ToPILImage()  # 这个函数可以将张量转为PIL图片，由小数转为0-255之间的像素值
 
     for test_data, test_mask in test_data_loader:
-
         B, H, W = test_mask.shape
         pic1 = toPIL(test_data[0])
         pic2 = toPIL(test_mask[0])

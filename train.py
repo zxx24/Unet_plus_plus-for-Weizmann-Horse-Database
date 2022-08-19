@@ -19,11 +19,11 @@ from PIL import Image
 import time
 
 # 此文件为训练文件 参数已经配置好，如果您要自行训练，请在下列root中修改保存图片的路径,并且修改new_model属性为1
-# 训练过程默认采用CPU 如果您要修改 还请自行修改model等置于GPU运算
 # 此Unet++ 默认采用了深监督 您可自行去除 并采用全部网络结构用于预测 如果你想加快预测速度可将cut置为true 可以大幅提升预测速率
 # 如果您仅仅想查看我的模型训练效果，可以将主函数中的main()注释掉，将best_model.pth放置在同级文件夹下，后运行即可，列表中save_num可以控制保存数目
 # 如果您要新建模型并训练建议把学习率增大至1e-3 或者更换其他lr_schedule 微调模型则相应降低学习率
 # best_model.pth为训练所得模型参数 Unet_plus_plus.pth为完整模型
+# 在最下方可以进行各种功能选择
 
 # 参数列表   以下部分数据 1代表 是 ;0代表 否
 # ！！！！！！！！！！！！！！！！！！！！！！！！！
@@ -37,7 +37,7 @@ parser.add_argument('--root', default='./horse/archive/weizmann_horse_db', help=
 # epoch次数
 parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train for')
 # 是否新建模型    1-新建    0-使用历史最佳pth
-parser.add_argument('--new_model', type=int, help='new model whether or not', default=1)
+parser.add_argument('--new_model', type=int, help='new model whether or not', default=0)
 # 是否进行深监督
 parser.add_argument('--deep_supervision', default=True)
 # 是否进行减枝    剪枝操作只会对预测过程有用 设为True大幅度提升预测效率
@@ -47,9 +47,9 @@ parser.add_argument('--lr', type=float, default=1e-3, help='the learning rate')
 # 最小学习率
 parser.add_argument('--min_lr', type=float, default=1e-5, help='minimum learning rate')
 # 保存模型条件    达到此要求会保存一个模型参数 best_biou.pth
-parser.add_argument('--early_stop_b_iou', type=float, default=0.69, help='the minimal boundary iou')
+parser.add_argument('--early_stop_b_iou', type=float, default=0.7, help='the minimal boundary iou')
 # 保存模型条件    达到此要求会保存一个模型参数 best_iou.pth
-parser.add_argument('--early_stop_iou', type=float, default=0.92, help='the minimal iou')
+parser.add_argument('--early_stop_iou', type=float, default=0.932, help='the minimal iou')
 # 退出训练条件之一 达到此要求代表有机会可以停止训练
 parser.add_argument('--signal_iou', type=float, default=0.95, help='the signal iou')
 # ---------------------------------------------------------------------------
@@ -202,15 +202,15 @@ def train(model, data_loader, optimizer):
     num = 0
     # 一整个Epoch训练过程
     for image_batch, mask_batch in data_loader:
-        image_batch = image_batch.cuda()
-        mask_batch = mask_batch.cuda()
+        image_batch = image_batch.to(device)
+        mask_batch = mask_batch.to(device)
         num += 1
         loss = 0
         # 判断是否采用深监督  批次输入and输出
         if deep_supervision:
             outputs = model(image_batch)
             for output in outputs:
-                loss += bce_dice_loss(output, mask_batch).cuda()
+                loss += bce_dice_loss(output, mask_batch).to(device)
             loss /= len(outputs)
             iou = calculate_iou(outputs[-1].squeeze(dim=1), mask_batch)
             b_iou = boundary_iou(mask_batch, outputs[-1].squeeze(dim=1))
@@ -250,8 +250,8 @@ def test(model, test_data_loader):
 
     with torch.no_grad():
         for test_data, test_mask in test_data_loader:
-            test_data = test_data.cuda()
-            test_mask = test_mask.cuda()
+            test_data = test_data.to(device)
+            test_mask = test_mask.to(device)
             loss = 0
             if deep_supervision:
                 outputs = model(test_data)
@@ -273,9 +273,9 @@ def test(model, test_data_loader):
     mean_iou = sum(IOU) / len(IOU)
     mean_b_iou = sum(B_IOU) / len(B_IOU)
     mean_loss = sum(LOSS) / len(LOSS)
-    print("测试集 mean iou", mean_iou)
-    print("测试集 mean boundary_iou", mean_b_iou)
-    print("测试集 mean loss", mean_loss)
+    print("测试数据 mean iou", mean_iou)
+    print("测试数据 mean boundary_iou", mean_b_iou)
+    print("测试数据 mean loss", mean_loss)
     return mean_iou, mean_b_iou, mean_loss
 
 
@@ -289,8 +289,8 @@ def save_fig(TRAIN_IOU, TRAIN_LOSS, TEST_IOU, TEST_LOSS, LR, EPOCH, TRAIN_B_IOU,
     EPOCH = torch.tensor(EPOCH, device='cpu')
     TRAIN_B_IOU = torch.tensor(TRAIN_B_IOU, device='cpu')
     TEST_B_IOU = torch.tensor(TEST_B_IOU, device='cpu')
-    #matplotlib.use('Agg')
-    
+    # matplotlib.use('Agg')
+
     plt.figure(figsize=(8, 8))
     plt.title('Mean Iou')
     plt.xlabel('EPOCH')
@@ -316,7 +316,7 @@ def save_fig(TRAIN_IOU, TRAIN_LOSS, TEST_IOU, TEST_LOSS, LR, EPOCH, TRAIN_B_IOU,
     else:
         plt.savefig(r"./%s/Boundary_iou.png" % (opt.outf))
     plt.clf()
-    
+
     plt.figure(figsize=(8, 8))
     plt.title('Mean Loss')
     plt.xlabel('EPOCH')
@@ -352,12 +352,12 @@ def show_predict(test_data_loader, sign):
     # 两种载入一种依据模型参数
 
     best_model = Unet_plus_plus(deep_supervision=deep_supervision, cut=cut)  # 默认在CPU上
-    state_dict = torch.load('best_model.pth')
+    state_dict = torch.load('best_model.pth', map_location=device)
     best_model.load_state_dict(state_dict, strict=False)
 
     best_model = best_model.to(device=device)
     # 直接载入完整模型
-    # best_model = torch.load('Unet_plus_plus.pth')  #可完整载入模型
+    # best_model = torch.load('Unet_plus_plus.pth',map_location=device)  #可完整载入模型
     # best_model.eval()
 
     if sign == 1:
@@ -366,12 +366,13 @@ def show_predict(test_data_loader, sign):
         elif cut is not True:
             print("完整结构预测结果为:")
         test_mean_iou, test_mean_b_iou, test_mean_loss = test(best_model, test_data_loader)
+    print("生成预测图片中...")
     cal = 0
     toPIL = transforms.ToPILImage()  # 这个函数可以将张量转为PIL图片，由小数转为0-255之间的像素值
     with torch.no_grad():
         for test_data, test_mask in test_data_loader:
-            test_data = test_data.cuda()
-            test_mask = test_mask.cuda()
+            test_data = test_data.to(device)
+            test_mask = test_mask.to(device)
             cal += 1
             B, H, W = test_mask.shape
             for k in range(B):
@@ -421,18 +422,17 @@ def show_predict(test_data_loader, sign):
 def cal_time(data_loader):
     cal_num = 10
     cut_model = Unet_plus_plus(deep_supervision=deep_supervision, cut=True)  # 默认在CPU上
-    cut_state_dict = torch.load('best_model.pth')
+    cut_state_dict = torch.load('best_model.pth', map_location=device)
     cut_model.load_state_dict(cut_state_dict, strict=False)
-    cut_model.to
     cut_model = cut_model.to(device=device)
     cut_model.eval()
-    
+
     not_cut_model = Unet_plus_plus(deep_supervision=deep_supervision, cut=False)  # 默认在CPU上
-    not_cut_state_dict = torch.load('best_model.pth')
+    not_cut_state_dict = torch.load('best_model.pth', map_location=device)
     not_cut_model.load_state_dict(not_cut_state_dict, strict=False)
     not_cut_model = not_cut_model.to(device=device)
     not_cut_model.eval()
-    
+
     CUT_TIME = 0
     NOT_CUT_TIME = 0
     for i in range(cal_num):
@@ -448,9 +448,10 @@ def cal_time(data_loader):
         time_end2 = time.time()  # 记录结束时间
         time_gap2 = time_end2 - time_start2  # 计算的时间差为程序的执行时间，单位为秒/s
         print("不剪枝时间间隔为", time_gap2)
-        NOT_CUT_TIME +=time_gap2
-    print("测试轮数：",cal_num,"总剪枝时长:",CUT_TIME,"平均时长:",float(CUT_TIME/cal_num))
-    print("测试轮数：",cal_num,"总剪枝时长:",NOT_CUT_TIME,"平均时长:",float(NOT_CUT_TIME/cal_num))
+        NOT_CUT_TIME += time_gap2
+    print("测试轮数：", cal_num, "总剪枝时长:", CUT_TIME, "平均时长:", float(CUT_TIME / cal_num))
+    print("测试轮数：", cal_num, "总剪枝时长:", NOT_CUT_TIME, "平均时长:", float(NOT_CUT_TIME / cal_num))
+
 
 def main():
     # 载入模型 deep_supervision与否来构建模型  后剪枝只在预测过程中使用 对于创建模型不影响，默认为False
@@ -462,9 +463,9 @@ def main():
     elif new_model == 0:
         print("载入历史最佳模型")
         model = Unet_plus_plus(input_channel=3, num_classes=1, deep_supervision=deep_supervision, cut=False)
-        state_dict = torch.load('best_model.pth')  # 载入参数
+        state_dict = torch.load('best_model.pth', map_location=device)  # 载入参数
         model.load_state_dict(state_dict, strict=False)
-        # model = torch.load('Unet_plus_plus.pth')  #可完整载入模型
+        # model = torch.load('Unet_plus_plus.pth',map_location=device)  #可完整载入模型
 
     else:
         model = Unet_plus_plus(input_channel=3, num_classes=1, deep_supervision=deep_supervision, cut=False)

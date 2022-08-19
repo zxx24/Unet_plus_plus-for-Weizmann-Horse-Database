@@ -5,13 +5,16 @@ import onnx.utils
 import onnx.version_converter
 from net import Unet_plus_plus
 
+# 判断GPU是否存在
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # 可生成onnx格式模型
 # 定义数据+网络
 data = torch.randn(1, 3, 80, 80)
 net = Unet_plus_plus(deep_supervision=True, cut=False)
-state_dict = torch.load('best_model.pth')
+state_dict = torch.load('best_model.pth', map_location=device)
 net.load_state_dict(state_dict, strict=False)
-
+net = net.to(device=device)
 # 导出
 torch.onnx.export(
     net,

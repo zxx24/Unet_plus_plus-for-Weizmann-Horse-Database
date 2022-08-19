@@ -10,6 +10,9 @@ from utils import calculate_iou, boundary_iou, bce_dice_loss, mask_to_boundary
 from PIL import Image
 import torch
 
+# 判断GPU是否存在
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 image_size = 80  # 默认设置
 with open('setting.txt', 'r') as f:
     lines = f.readlines()
@@ -101,14 +104,12 @@ test_data_loader = torch.utils.data.DataLoader(
 # 定义想要测试的数据
 data_loader = test_data_loader
 
-# 判断GPU是否存在
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("-" * 34)
 print("开始预测")
 # 参数可自行设置
 best_model = Unet_plus_plus(deep_supervision=deep_supervision, cut=False)  # 默认在CPU上
 # 以参数形式载入
-state_dict = torch.load('best_model.pth')
+state_dict = torch.load('best_model.pth', map_location=device)
 best_model.load_state_dict(state_dict, strict=False)
 best_model = best_model.to(device=device)
 
@@ -124,8 +125,9 @@ LOSS = []
 
 with torch.no_grad():
     for test_data, test_mask in data_loader:
-        test_data = test_data.cuda()
-        test_mask = test_mask.cuda()
+        test_data = test_data.to(device)
+        test_mask = test_mask.to(device)
+
         loss = 0
         if deep_supervision:
             outputs = best_model(test_data)
@@ -150,4 +152,3 @@ mean_loss = sum(LOSS) / len(LOSS)
 print("测试数据 mean iou", mean_iou)
 print("测试数据 mean boundary_iou", mean_b_iou)
 print("测试数据 mean loss", mean_loss)
-

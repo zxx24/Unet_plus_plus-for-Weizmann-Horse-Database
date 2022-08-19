@@ -11,8 +11,7 @@ from torchvision.transforms import ToPILImage
 
 # 此文件为数据增强文件
 # 在Augment_image类中定义了数种常见的数据增强增强方法，每次从中随机选用一种（含仅方式方式）
-# 对于训练集可以在Train_Transform中进行数据增强的方法，可以根据需要选择resize或者使用多种方法进行数据增强
-# 对于测试集则只使用resize处理
+# 来处理图像数据
 
 # 在此类中定义增强手段 当需要填充时，默认用0填充
 # 因为0在图像中为黑色 在标签中代表背景
