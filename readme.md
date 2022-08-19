@@ -25,8 +25,6 @@ In the project:
 
 **[Unet_plus_plus.pth](https://pan.baidu.com/s/1imaO-CyHwAGlIOFV9vNH1A)** holds the full structure of the best model from my training process.
 
-Please place the model files in the same level directory as the .py files.The models are trained on GPUs, so please **ensure that your computer has a GPU** when testing or training.
-
 ## Prepare Your Data
 
 1. Please obtain the dataset from [Weizmann Horse Database | Kaggle](https://www.kaggle.com/datasets/ztaihong/weizmann-horse-database/metadata).
@@ -49,7 +47,7 @@ $root/
 
 ## A Quick Demo
 
-I picked a random image from the test images and then used the pre-trained model to semantically segment it and present the results on the console.
+I picked a random image from the test images and then used the pre-trained model to semantically segment it and present the results on the console.Please ensure that the best_model.pth is correctly placed in the .py sibling directory.
 
     python demo.py
 
@@ -60,6 +58,7 @@ Run the following command to train Unet++ :
     python train.py
 
 - 'root'(in train.py) should be modified to your dataset directory.
+- 'new_model'(in train.py)  **1 - create a new model to train  |  0 - use the best_model.pth to continue training**
 - Please see the contents of train.py for specific parameter settings. There are detailed descriptions inside. The important parameters are epochs, deep_supervision, cut, learning rate. They determine the results of training and testing.
 - I have trained a model which you can use directly by setting the parameters in train.py.
 - Training with GPU.
