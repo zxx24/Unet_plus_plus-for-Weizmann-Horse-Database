@@ -62,7 +62,7 @@ Run the following command to train Unet++ :
 - 'root'(in train.py) should be modified to your dataset directory.
 - Please see the contents of train.py for specific parameter settings. There are detailed descriptions inside. The important parameters are epochs, deep_supervision, cut, learning rate. They determine the results of training and testing.
 - I have trained a model which you can use directly by setting the parameters in train.py.
-- I was able to train the model on CPU(Intel(R) Core(TM) i7-10710U CPU @ 1.10GHz   1.61 GHz). The training took approximately 10 hours in 200 Epoch conditions.
+- Training with GPU.
 
 ## Testing ##
 
