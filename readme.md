@@ -25,7 +25,7 @@ In the project:
 
 **[Unet_plus_plus.pth](https://pan.baidu.com/s/1imaO-CyHwAGlIOFV9vNH1A)** holds the full structure of the best model from my training process.
 
-Please place the model files in the same level directory as the .py files.
+Please place the model files in the same level directory as the .py files.The models are trained on GPUs, so please **ensure that your computer has a GPU** when testing or training.
 
 ## Prepare Your Data
 
